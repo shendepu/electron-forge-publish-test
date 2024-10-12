@@ -13,7 +13,9 @@
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make",
+    "make-mas": "electron-forge make --arch=universal --platform=mas",
+    "make-mac": "electron-forge make --arch=universal --platform=darwin",
+    "make-win": "electron-forge make --arch=x64 --platform=win32",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx ."
   },
