@@ -16,7 +16,9 @@
     "make-mas": "electron-forge make --arch=universal --platform=mas",
     "make-mac": "electron-forge make --arch=universal --platform=darwin",
     "make-win": "electron-forge make --arch=x64 --platform=win32",
-    "publish": "electron-forge publish",
+    "publish-mas": "electron-forge publish --arch=universal --platform=mas",
+    "publish-mac": "electron-forge publish --arch=universal --platform=darwin",
+    "publish-win": "electron-forge publish --arch=x64 --platform=win32",
     "lint": "eslint --ext .ts,.tsx ."
   },
   "lint-staged": {
