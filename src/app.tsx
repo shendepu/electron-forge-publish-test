@@ -3,10 +3,10 @@ import { createRoot } from 'react-dom/client';
 const App = () => {
   return (
     <div>
-      <h2>Hello World</h2>
+      <h2>Simple App</h2>
     </div>
   )
 }
 
-const root = createRoot(document.body);
+const root = createRoot(document.getElementById("root"));
 root.render(<App />);

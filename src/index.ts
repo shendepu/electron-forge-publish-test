@@ -16,10 +16,13 @@ const isDev = process.env.NODE_ENV !== 'production';
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
+    icon: `${__dirname}/src/assets/app-icon`,
     height: 600,
     width: isDev ? 1100 : 800,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+      nodeIntegration: true,
+      contextIsolation: false,
     },
   });
 
@@ -29,6 +32,10 @@ const createWindow = (): void => {
   if (isDev) {
     mainWindow.webContents.openDevTools();
   }
+
+  mainWindow.on("close", () => {
+    app.quit();
+  });
 };
 
 // This method will be called when Electron has finished
