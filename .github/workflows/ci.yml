@@ -1,0 +1,113 @@
+# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+
+name: Simple App CI
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    
+jobs:
+  publish-macos:
+    name: publish mas and mac app
+    strategy:
+      matrix:
+        platform: [ macos-14 ]
+    runs-on: ${{ matrix.platform }}
+    environment: production
+    steps:
+      - name: Install Apple codesigning certificate
+        env:
+          APPLE_MAS_APP_CERT_BASE64: ${{ secrets.APPLE_MAS_APP_CERT_BASE64 }}
+          APPLE_MAS_INSTALLER_CERT_BASE64: ${{ secrets.APPLE_MAS_INSTALLER_CERT_BASE64 }}
+          APPLE_DEV_ID_CERT_BASE64: ${{ secrets.APPLE_DEV_ID_CERT_BASE64 }}
+          APPLE_P12_PASSWORD: ${{ secrets.APPLE_P12_PASSWORD }}
+          APPLE_MAS_APP_PROVISION_PROFILE_BASE64: ${{ secrets.APPLE_MAS_APP_PROVISION_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          APPLE_MAS_APP_CERT_PATH=$RUNNER_TEMP/mas_app_cert.p12
+          APPLE_MAS_INSTALLER_CERT_PATH=$RUNNER_TEMP/mas_installer_cert.p12
+          APPLE_DEV_ID_CERT_PATH=$RUNNER_TEMP/dev_id_cert.p12
+          
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          
+          # import certificate and provisioning profile from secrets
+          echo -n "$APPLE_MAS_APP_CERT_BASE64" | base64 --decode -o $APPLE_MAS_APP_CERT_PATH
+          echo -n "$APPLE_MAS_INSTALLER_CERT_BASE64" | base64 --decode -o $APPLE_MAS_INSTALLER_CERT_PATH
+          echo -n "$APPLE_DEV_ID_CERT_BASE64" | base64 --decode -o $APPLE_DEV_ID_CERT_PATH
+
+          # create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # import certificate to keychain
+          security import $APPLE_MAS_APP_CERT_PATH -P "$APPLE_P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security import $APPLE_MAS_INSTALLER_CERT_PATH -P "$APPLE_P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security import $APPLE_DEV_ID_CERT_PATH -P "$APPLE_P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          security find-identity -v
+          
+          # import mas provision profile
+          APPLE_MAS_APP_PROVISION_PROFILE_PATH=$RUNNER_TEMP/mas_app.provisionprofile
+          echo -n "$APPLE_MAS_APP_PROVISION_PROFILE_BASE64" | base64 --decode -o $APPLE_MAS_APP_PROVISION_PROFILE_PATH
+          echo -n "APPLE_MAS_APP_PROVISION_PROFILE=$APPLE_MAS_APP_PROVISION_PROFILE_PATH" >> $GITHUB_ENV  
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20.13.1'
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and publish app to github
+        env:
+          NODE_ENV: production
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_APP_ID: ${{ secrets.APPLE_APP_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          PUBLISH_GITHUB_AUTH_TOKEN: ${{ secrets.PUBLISH_GITHUB_AUTH_TOKEN }}
+
+          APPLE_MAS_APP_CERT_IDENTITY: ${{ secrets.APPLE_MAS_APP_CERT_IDENTITY }}
+          APPLE_MAS_INSTALLER_CERT_IDENTITY: ${{ secrets.APPLE_MAS_INSTALLER_CERT_IDENTITY }}
+          APPLE_DEV_ID_CERT_IDENTITY: ${{ secrets.APPLE_DEV_ID_CERT_IDENTITY }}
+        run: |
+          npm run publish-mac
+          npm run publish-mas
+
+      - name: Clean up keychain
+        if: ${{ always() }}
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
+
+  publish-windows:
+    if: false
+    name: publish windows app
+    strategy:
+      matrix:
+        platform: [ windows-latest ]
+    runs-on: ${{ matrix.platform }}
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20.13.1'
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and publish app to github
+        env:
+          PUBLISH_GITHUB_AUTH_TOKEN: ${{ secrets.PUBLISH_GITHUB_AUTH_TOKEN }}
+        run: npm run publish-win
