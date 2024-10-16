@@ -1,7 +1,7 @@
 {
   "name": "simple-test-app",
   "productName": "simple-test-app",
-  "version": "1.0.13",
+  "version": "1.0.15",
   "description": "Simple Test App",
   "main": ".webpack/main",
   "keywords": [],

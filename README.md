@@ -53,3 +53,32 @@ KEYCHAIN_PASSWORD =
   
   iconutil -c icns icons.iconset -o icons.icns
 ```
+
+
+## Mac 
+
+
+Code Sign
+```
+# Display entitlement of macos app
+codesign -d --entitlements :- simple-test-app.app
+
+# Validate MAS Signing
+codesign --verify --deep --strict --verbose=2 /path/to/your.app
+spctl --assess --verbose=4 /path/to/your.app
+
+codesign -dv --verbose=4 /path/to/YourApp.app
+
+# Verify the Signed Package
+pkgutil --check-signature /path/to/output/yourapp.pkg
+
+```
+
+Key Chain
+```
+# List certificates in keychain 
+security find-identity -v
+
+# Display provision profile content
+security cms -D -i /path/to/mas_app.provisionprofile
+```

@@ -1,31 +1,46 @@
 import dotenv from 'dotenv';
+import path from "path";
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
 import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
+
 import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
-
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
-import { FusesPlugin } from '@electron-forge/plugin-fuses';
 
+import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
 import { mainConfig } from './webpack.main.config';
-import { rendererConfig } from './webpack.renderer.config';
 
+import { rendererConfig } from './webpack.renderer.config';
 import packageJSON from './package.json';
-console.log('NODE_ENV', process.env.NODE_ENV);
 
 const env = process.env.NODE_ENV || 'development'; // 默认为 development 环境
+console.log('environment: ', env);
+
 if (env !== 'production') dotenv.config({ path: `.env.${env}` });
+
+const {
+  EF_PLATFORM,
+  APPLE_ID,
+  APPLE_ID_PASSWORD,
+  APPLE_TEAM_ID,
+  APPLE_APP_ID,
+  APPLE_MAS_APP_CERT_IDENTITY,
+  APPLE_MAS_INSTALLER_CERT_IDENTITY,
+  APPLE_DEV_ID_CERT_IDENTITY,
+  APPLE_MAS_APP_PROVISION_PROFILE,
+  PUBLISH_GITHUB_AUTH_TOKEN,
+} = process.env;
 
 const APP_NAME = packageJSON.name;
 const APP_VERSION = packageJSON.version;
 const APP_COPYRIGHT = `${APP_NAME} copyright`;
 
-const isMas = process.env.EF_PLATFORM === 'mas';
-// const isDarwin = process.env.EF_PLATFORM === 'darwin';
+const isMas = EF_PLATFORM === 'mas';
 
+console.log('isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY', isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY)
 
 /* Important notice:
 
@@ -36,8 +51,6 @@ const isMas = process.env.EF_PLATFORM === 'mas';
 
   https://github.com/electron/electron/blob/main/docs/tutorial/mac-app-store-submission-guide.md
  */
-const osxSignIdentity = isMas ? process.env.APPLE_MAS_APP_CERT_IDENTITY : process.env.APPLE_DEV_ID_CERT_IDENTITY;
-const osxSignProvisionProfile = isMas ? process.env.APPLE_MAS_APP_PROVISION_PROFILE : undefined
 
 const sortedEnv: { [key: string]: string | undefined } = Object.keys(process.env)
   .sort() // Sort keys alphabetically
@@ -49,24 +62,51 @@ const sortedEnv: { [key: string]: string | undefined } = Object.keys(process.env
 
 console.log(sortedEnv);
 
+// https://github.com/electron/osx-sign/blob/afb5d3828bc44ec1ecfd8d7768bba5a5620a068a/src/sign.ts#L91
+const getEntitlements = (filePath: string, platform: string) => {
+  const entitlementsFolder = path.resolve(__dirname, 'entitlements');
+
+  let entitlementsFile: string;
+  if (platform === 'darwin') {
+    entitlementsFile = path.resolve(entitlementsFolder, 'darwin.plist');
+    if (filePath.includes('(Plugin).app')) {
+      entitlementsFile = path.resolve(entitlementsFolder, 'darwin.plugin.plist');
+    } else if (filePath.includes('(GPU).app')) {
+      entitlementsFile = path.resolve(entitlementsFolder, 'darwin.gpu.plist');
+    } else if (filePath.includes('(Renderer).app')) {
+      entitlementsFile = path.resolve(entitlementsFolder, 'darwin.renderer.plist');
+    }
+  } else {
+    entitlementsFile = path.resolve(entitlementsFolder, 'mas.plist');
+
+    if (filePath.includes('.app/')) {
+      entitlementsFile = path.resolve(entitlementsFolder, 'mas.child.plist');
+    }
+  }
+  return entitlementsFile;
+}
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    appBundleId: process.env.APPLE_APP_ID,
+    appBundleId: APPLE_APP_ID,
     appCopyright: APP_COPYRIGHT,
     appVersion: APP_VERSION,
     executableName: APP_NAME,
     icon: 'src/assets/icons/mac/icon.icns',
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    platform: process.env.EF_PLATFORM,
+    platform: EF_PLATFORM,
     osxSign: {
-      identity:  osxSignIdentity,
+      identity: isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY,
+      identityValidation: true,
+      type: "distribution",
+      preEmbedProvisioningProfile: isMas,
+      provisioningProfile: isMas ? APPLE_MAS_APP_PROVISION_PROFILE : undefined,
       optionsForFile: (filePath) => ({
         hardenedRuntime: true,
-        "signature-flags": "deep",
+        entitlements:  getEntitlements(filePath, EF_PLATFORM),
       }),
-      provisioningProfile: osxSignProvisionProfile,
     },
     osxNotarize: isMas ? undefined : {
       appleId: process.env.APPLE_ID,
@@ -98,7 +138,7 @@ const config: ForgeConfig = {
       config: {
         icon: 'src/assets/icon',
         name: `${APP_NAME}-${APP_VERSION}-universal-mas`,
-        identity: process.env.APPLE_MAS_INSTALLER_CERT_IDENTITY,
+        identity: isMas ? APPLE_MAS_INSTALLER_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY,
       }
     },
     new MakerRpm({}),
@@ -138,7 +178,7 @@ const config: ForgeConfig = {
     {
       name: '@electron-forge/publisher-github',
       config: {
-        authToken: process.env.PUBLISH_GITHUB_AUTH_TOKEN,
+        authToken: PUBLISH_GITHUB_AUTH_TOKEN,
         repository: {
           owner: 'shendepu',
           name: 'electron-forge-simple-app',
