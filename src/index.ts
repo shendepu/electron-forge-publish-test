@@ -16,13 +16,14 @@ const isDev = process.env.NODE_ENV !== 'production';
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    icon: `${__dirname}/src/assets/app-icon`,
+    icon: `./assets/app-icon`,
     height: 600,
     width: isDev ? 1100 : 800,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      defaultEncoding: 'UTF-8',
+      contextIsolation: true,
     },
   });
 
@@ -59,6 +60,5 @@ app.on('activate', () => {
     createWindow();
   }
 });
-
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.

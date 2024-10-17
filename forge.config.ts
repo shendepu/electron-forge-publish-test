@@ -29,12 +29,13 @@ const {
   APPLE_APP_ID,
   APPLE_MAS_APP_CERT_IDENTITY,
   APPLE_MAS_INSTALLER_CERT_IDENTITY,
-  APPLE_DEV_ID_CERT_IDENTITY,
   APPLE_MAS_APP_PROVISION_PROFILE,
+  APPLE_DEV_ID_CERT_IDENTITY,
+  APPLE_MAC_APP_PROVISION_PROFILE,
   PUBLISH_GITHUB_AUTH_TOKEN,
 } = process.env;
 
-const APP_NAME = packageJSON.name;
+const APP_NAME = packageJSON.productName;
 const APP_VERSION = packageJSON.version;
 const APP_COPYRIGHT = `${APP_NAME} copyright`;
 
@@ -94,18 +95,22 @@ const config: ForgeConfig = {
     appVersion: APP_VERSION,
     executableName: APP_NAME,
     icon: 'src/assets/icons/mac/icon.icns',
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    platform: EF_PLATFORM,
+    extendInfo: {
+      ElectronTeamID: 'NHTCLRDA6A',
+    },
+    // // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // // @ts-ignore
+    // platform: EF_PLATFORM,
     osxSign: {
       identity: isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY,
       identityValidation: true,
       type: "distribution",
-      preEmbedProvisioningProfile: isMas,
-      provisioningProfile: isMas ? APPLE_MAS_APP_PROVISION_PROFILE : undefined,
+      preAutoEntitlements: false,
+      preEmbedProvisioningProfile: true,
+      provisioningProfile: isMas ? APPLE_MAS_APP_PROVISION_PROFILE : APPLE_MAC_APP_PROVISION_PROFILE,
       optionsForFile: (filePath) => ({
         hardenedRuntime: true,
-        entitlements:  getEntitlements(filePath, EF_PLATFORM),
+        entitlements:  getEntitlements(filePath, 'mas'),
       }),
     },
     osxNotarize: isMas ? undefined : {

@@ -29,7 +29,22 @@ APPLE_SIGNING_CERTIFICATE_PASSWORD =
 KEYCHAIN_PASSWORD = 
 ```
 
+## Run
 
+```
+npm run make-mas
+npm run make-mac
+npm run make-win
+
+npm publish make-mas
+npm publish make-mac
+npm publish make-win
+
+
+# show debug info
+DEBUG=electron-osx-sign* npm run make-mac
+
+```
 
 
 
@@ -81,4 +96,9 @@ security find-identity -v
 
 # Display provision profile content
 security cms -D -i /path/to/mas_app.provisionprofile
+```
+
+```
+syspolicy_check notary-submission -v /path/to/your.app
+
 ```
