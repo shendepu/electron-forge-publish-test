@@ -62,9 +62,10 @@ DEBUG=electron-osx-sign* npm run make-mac
   sips -z 128 128 icon.png --out icons.iconset/icon_128x128.png
   sips -z 256 256 icon.png --out icons.iconset/icon_128x128@2x.png
   sips -z 256 256 icon.png --out icons.iconset/icon_256x256.png
-  sips -z 512 512 icon.png --out icons.iconset/icon_256x256@2x.png
+  sips -z 256 256 icon.png --out icons.iconset/icon_256x256@2x.png
   sips -z 512 512 icon.png --out icons.iconset/icon_512x512.png
-  sips -z 1024 1024 icon.png --out icons.iconset/icon_512x512@2x.png
+  sips -z 512 512 icon.png --out icons.iconset/icon_512x512@2x.png
+  sips -z 1024 1024 icon.png --out icons.iconset/icon_1024x1024.png
   
   iconutil -c icns icons.iconset -o icons.icns
 ```
@@ -84,8 +85,6 @@ spctl --assess --verbose=4 /path/to/your.app
 
 codesign -dv --verbose=4 /path/to/YourApp.app
 
-# Verify the Signed Package
-pkgutil --check-signature /path/to/output/yourapp.pkg
 
 ```
 
@@ -101,4 +100,17 @@ security cms -D -i /path/to/mas_app.provisionprofile
 ```
 syspolicy_check notary-submission -v /path/to/your.app
 
+```
+
+
+Pkg
+```
+# Verify the Signed Package
+pkgutil --check-signature /path/to/output/yourapp.pkg
+
+# Extract app from pkg
+pkgutil --expand /path/to/your.pkg out
+# cd into extracted folder
+cat Payload | gunzip -dc | cpio -i
+asar extract /path/to/your.app/Contents/Resources/app.asar asar
 ```

@@ -17,13 +17,13 @@ const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     icon: `./assets/app-icon`,
-    height: 600,
-    width: isDev ? 1100 : 800,
+    height: 1000,
+    width: isDev ? 1100 : 1200,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-      nodeIntegration: false,
+      nodeIntegration: true,
       defaultEncoding: 'UTF-8',
-      contextIsolation: true,
+      contextIsolation: false,
     },
   });
 

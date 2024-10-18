@@ -1,7 +1,7 @@
 {
   "name": "simple-test-app",
   "productName": "SimpleTestApp",
-  "version": "1.0.31",
+  "version": "1.0.50",
   "description": "Simple Test App",
   "main": ".webpack/main",
   "keywords": [],
@@ -53,7 +53,7 @@
     "@vercel/webpack-asset-relocator-loader": "1.7.3",
     "css-loader": "^6.0.0",
     "dotenv": "^16.4.5",
-    "electron": "32.2.0",
+    "electron": "33.0.1",
     "eslint": "^8.0.1",
     "eslint-plugin-import": "^2.25.0",
     "fork-ts-checker-webpack-plugin": "^7.2.13",

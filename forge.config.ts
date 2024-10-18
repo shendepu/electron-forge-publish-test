@@ -41,7 +41,7 @@ const APP_COPYRIGHT = `${APP_NAME} copyright`;
 
 const isMas = EF_PLATFORM === 'mas';
 
-console.log('isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY', isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY)
+console.log('Sign certificate: ', isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY)
 
 /* Important notice:
 
@@ -95,9 +95,23 @@ const config: ForgeConfig = {
     appVersion: APP_VERSION,
     executableName: APP_NAME,
     icon: 'src/assets/icons/mac/icon.icns',
-    extendInfo: {
-      ElectronTeamID: 'NHTCLRDA6A',
-    },
+    // ignore: (file: string) => {
+    //   if (!file) return false;
+    //   const jsonStats = false
+    //   if (jsonStats) {
+    //     if (file.endsWith(path.join('.webpack', 'main', 'stats.json'))) return true;
+    //     if (file.endsWith(path.join('.webpack', 'renderer', 'stats.json'))) return true;
+    //   }
+    //   const packageSourceMaps = false
+    //   if (!packageSourceMaps && /[^/\\]+\.js\.map$/.test(file)) {
+    //     return true;
+    //   }
+    //
+    //   return !(/^[/\\]\.webpack($|[/\\]).*$/.test(file) || file.startsWith('/node_modules'));
+    // },
+    // extendInfo: {
+    //   ElectronTeamID: 'NHTCLRDA6A',
+    // },
     // // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // // @ts-ignore
     // platform: EF_PLATFORM,
@@ -105,12 +119,12 @@ const config: ForgeConfig = {
       identity: isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY,
       identityValidation: true,
       type: "distribution",
-      preAutoEntitlements: false,
+      preAutoEntitlements: true,
       preEmbedProvisioningProfile: true,
       provisioningProfile: isMas ? APPLE_MAS_APP_PROVISION_PROFILE : APPLE_MAC_APP_PROVISION_PROFILE,
       optionsForFile: (filePath) => ({
         hardenedRuntime: true,
-        entitlements:  getEntitlements(filePath, 'mas'),
+        entitlements:  getEntitlements(filePath, EF_PLATFORM),
       }),
     },
     osxNotarize: isMas ? undefined : {
@@ -171,12 +185,13 @@ const config: ForgeConfig = {
     // at package time, before code signing the application
     new FusesPlugin({
       version: FuseVersion.V1,
-      [FuseV1Options.RunAsNode]: false,
+      [FuseV1Options.RunAsNode]: true,
       [FuseV1Options.EnableCookieEncryption]: true,
       [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
       [FuseV1Options.EnableNodeCliInspectArguments]: false,
       [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
       [FuseV1Options.OnlyLoadAppFromAsar]: true,
+      [FuseV1Options.GrantFileProtocolExtraPrivileges]: true,
     }),
   ],
   publishers: [
