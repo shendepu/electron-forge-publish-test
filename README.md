@@ -93,8 +93,6 @@ Key Chain
 # List certificates in keychain 
 security find-identity -v
 
-# Display provision profile content
-security cms -D -i /path/to/mas_app.provisionprofile
 ```
 
 ```
@@ -113,4 +111,12 @@ pkgutil --expand /path/to/your.pkg out
 # cd into extracted folder
 cat Payload | gunzip -dc | cpio -i
 asar extract /path/to/your.app/Contents/Resources/app.asar asar
+```
+
+Provision Profile
+```
+# Display provision profile content
+security cms -D -i /path/to/mas_app.provisionprofile
+
+security cms -D -i your_app.provisionprofile | xmllint --xpath "/plist/dict/key[text()='Entitlements']/following-sibling::dict[position()=1]" -
 ```

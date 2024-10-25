@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import path from "path";
+import path from 'path';
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
@@ -41,7 +41,10 @@ const APP_COPYRIGHT = `${APP_NAME} copyright`;
 
 const isMas = EF_PLATFORM === 'mas';
 
-console.log('Sign certificate: ', isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY)
+console.log(
+  'Sign certificate: ',
+  isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY,
+);
 
 /* Important notice:
 
@@ -53,10 +56,16 @@ console.log('Sign certificate: ', isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DE
   https://github.com/electron/electron/blob/main/docs/tutorial/mac-app-store-submission-guide.md
  */
 
-const sortedEnv: { [key: string]: string | undefined } = Object.keys(process.env)
+const sortedEnv: { [key: string]: string | undefined } = Object.keys(
+  process.env,
+)
   .sort() // Sort keys alphabetically
   .reduce((acc: { [key: string]: string | undefined }, key: string) => {
-    if (key.startsWith('APPLE_') || key.startsWith('EF_') || key.includes('GITHUB'))
+    if (
+      key.startsWith('APPLE_') ||
+      key.startsWith('EF_') ||
+      key.includes('GITHUB')
+    )
       acc[key] = process.env[key];
     return acc;
   }, {});
@@ -71,11 +80,17 @@ const getEntitlements = (filePath: string, platform: string) => {
   if (platform === 'darwin') {
     entitlementsFile = path.resolve(entitlementsFolder, 'darwin.plist');
     if (filePath.includes('(Plugin).app')) {
-      entitlementsFile = path.resolve(entitlementsFolder, 'darwin.plugin.plist');
+      entitlementsFile = path.resolve(
+        entitlementsFolder,
+        'darwin.plugin.plist',
+      );
     } else if (filePath.includes('(GPU).app')) {
       entitlementsFile = path.resolve(entitlementsFolder, 'darwin.gpu.plist');
     } else if (filePath.includes('(Renderer).app')) {
-      entitlementsFile = path.resolve(entitlementsFolder, 'darwin.renderer.plist');
+      entitlementsFile = path.resolve(
+        entitlementsFolder,
+        'darwin.renderer.plist',
+      );
     }
   } else {
     entitlementsFile = path.resolve(entitlementsFolder, 'mas.plist');
@@ -85,11 +100,13 @@ const getEntitlements = (filePath: string, platform: string) => {
     }
   }
   return entitlementsFile;
-}
+};
 
 const config: ForgeConfig = {
   packagerConfig: {
-    asar: true,
+    asar: {
+      unpack: 'ffmpeg/**',
+    },
     appBundleId: APPLE_APP_ID,
     appCopyright: APP_COPYRIGHT,
     appVersion: APP_VERSION,
@@ -116,22 +133,38 @@ const config: ForgeConfig = {
     // // @ts-ignore
     // platform: EF_PLATFORM,
     osxSign: {
-      identity: isMas ? APPLE_MAS_APP_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY,
+      identity: isMas
+        ? APPLE_MAS_APP_CERT_IDENTITY
+        : APPLE_DEV_ID_CERT_IDENTITY,
       identityValidation: true,
-      type: "distribution",
+      type: 'distribution',
       preAutoEntitlements: true,
       preEmbedProvisioningProfile: true,
-      provisioningProfile: isMas ? APPLE_MAS_APP_PROVISION_PROFILE : APPLE_MAC_APP_PROVISION_PROFILE,
-      optionsForFile: (filePath) => ({
+      provisioningProfile: isMas
+        ? APPLE_MAS_APP_PROVISION_PROFILE
+        : APPLE_MAC_APP_PROVISION_PROFILE,
+      optionsForFile: filePath => ({
         hardenedRuntime: true,
-        entitlements:  getEntitlements(filePath, EF_PLATFORM),
+        entitlements: getEntitlements(filePath, EF_PLATFORM),
       }),
     },
-    osxNotarize: isMas ? undefined : {
-      appleId: APPLE_ID,
-      appleIdPassword: APPLE_ID_PASSWORD,
-      teamId: APPLE_TEAM_ID,
+    osxNotarize: isMas
+      ? undefined
+      : {
+          appleId: APPLE_ID,
+          appleIdPassword: APPLE_ID_PASSWORD,
+          teamId: APPLE_TEAM_ID,
+        },
+    osxUniversal: {
+      x64ArchFiles: '*',
     },
+    extraResource:
+      process.platform === 'win32'
+        ? ['ffmpeg/win32/ffmpeg.exe', 'ffmpeg/win32/ffprobe.exe']
+        : [
+            `ffmpeg/${process.platform}/ffmpeg`,
+            `ffmpeg/${process.platform}/ffprobe`,
+          ],
   },
   rebuildConfig: {},
   makers: [
@@ -140,14 +173,14 @@ const config: ForgeConfig = {
       setupIcon: __dirname + '/src/assets/icons/win/icon.ico',
       version: APP_VERSION,
     }),
-    new MakerZIP({}, ["win32"]),
+    new MakerZIP({}, ['win32']),
     {
       name: '@electron-forge/maker-dmg',
       platforms: ['darwin'],
       config: {
         icon: 'src/assets/icons/mac/icon.icns',
-        format: 'UDBZ'
-      }
+        format: 'UDBZ',
+      },
     },
     {
       name: '@electron-forge/maker-pkg',
@@ -157,11 +190,13 @@ const config: ForgeConfig = {
       config: {
         icon: 'src/assets/icon',
         name: `${APP_NAME}-${APP_VERSION}-universal-mas`,
-        identity: isMas ? APPLE_MAS_INSTALLER_CERT_IDENTITY : APPLE_DEV_ID_CERT_IDENTITY,
-      }
+        identity: isMas
+          ? APPLE_MAS_INSTALLER_CERT_IDENTITY
+          : APPLE_DEV_ID_CERT_IDENTITY,
+      },
     },
     new MakerRpm({}),
-    new MakerDeb({})
+    new MakerDeb({}),
   ],
   plugins: [
     new AutoUnpackNativesPlugin({}),
@@ -174,9 +209,9 @@ const config: ForgeConfig = {
             html: './src/index.html',
             js: './src/renderer.ts',
             name: 'main_window',
-            preload: {
-              js: './src/preload.ts',
-            },
+            // preload: {
+            //   js: './src/preload.ts',
+            // },
           },
         ],
       },
@@ -203,9 +238,9 @@ const config: ForgeConfig = {
           owner: 'shendepu',
           name: 'electron-forge-simple-app',
         },
-        prerelease: true
-      }
-    }
+        prerelease: true,
+      },
+    },
   ],
 };
 

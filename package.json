@@ -1,7 +1,7 @@
 {
   "name": "simple-test-app",
   "productName": "SimpleTestApp",
-  "version": "1.0.50",
+  "version": "1.0.52",
   "description": "Simple Test App",
   "main": ".webpack/main",
   "keywords": [],
@@ -66,6 +66,7 @@
     "typescript": "~4.5.4"
   },
   "dependencies": {
+    "@electron/remote": "^2.1.2",
     "electron-squirrel-startup": "^1.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
