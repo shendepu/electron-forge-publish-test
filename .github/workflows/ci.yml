@@ -162,7 +162,7 @@ jobs:
           APPLE_MAS_INSTALLER_CERT_IDENTITY: ${{ secrets.APPLE_MAS_INSTALLER_CERT_IDENTITY }}
           APPLE_DEV_ID_CERT_IDENTITY: ${{ secrets.APPLE_DEV_ID_CERT_IDENTITY }}
         run: |
-          npm run publish-mas
+          npm run publish-mac
 
       - name: Clean up keychain
         if: ${{ always() }}
